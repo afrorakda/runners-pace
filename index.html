@@ -197,8 +197,8 @@
     </div>
 
     <div class="input-group">
-        <label class="input-label">Time (HH:MM:SS)</label>
-        <input type="tel" id="timeInput" placeholder="03:59:59" oninput="handleTimeInput(this)">
+        <label class="input-label">Time (MM:SS or HH:MM:SS)</label>
+        <input type="tel" id="timeInput" placeholder="22:00" oninput="handleTimeInput(this)">
         <button class="clear-btn" id="clr-time" onclick="clearInput('timeInput')">×</button>
     </div>
 
@@ -250,23 +250,16 @@
 
     function setUnit(u) {
         if (unit === u) return;
-        
         const currentDist = parseFloat(distInput.value);
         if (currentDist) {
-            if (u === 'mile') {
-                distInput.value = (currentDist * 0.621371).toFixed(3);
-            } else {
-                distInput.value = (currentDist / 0.621371).toFixed(3);
-            }
+            if (u === 'mile') distInput.value = (currentDist * 0.621371).toFixed(3);
+            else distInput.value = (currentDist / 0.621371).toFixed(3);
         }
-        
         unit = u;
         document.getElementById('btn-km').classList.toggle('active', u === 'km');
         document.getElementById('btn-mile').classList.toggle('active', u === 'mile');
         distLabel.innerText = u === 'km' ? 'Distance (km)' : 'Distance (miles)';
         paceLabel.innerText = u === 'km' ? 'Pace (/km)' : 'Pace (/mile)';
-        
-        // Clear highlights as manual toggle might break the preset relationship
         document.querySelectorAll('.dist-btn').forEach(b => b.classList.remove('active'));
         calculate();
     }
@@ -274,7 +267,6 @@
     function quickDist(kmVal, btn) {
         document.querySelectorAll('.dist-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        
         const finalVal = unit === 'mile' ? (kmVal * 0.621371).toFixed(3) : kmVal;
         distInput.value = parseFloat(finalVal);
         updateClearBtns();
@@ -290,7 +282,6 @@
     function handleTimeInput(input) {
         let val = input.value.replace(/[^0-9]/g, '');
         if (val.length > 6) val = val.slice(0, 6);
-        
         let formatted = '';
         if (val.length > 0) {
             if (val.length <= 2) formatted = val;
@@ -318,36 +309,38 @@
 
     function calculate() {
         const dist = parseFloat(distInput.value);
-        const timeParts = timeInput.value.split(':').map(v => parseInt(v) || 0);
+        const rawTime = timeInput.value.replace(/:/g, '');
         
-        if (!dist || timeParts.length === 0 || timeInput.value === '') {
-            paceRes.innerText = '-';
-            lapRes.innerText = '-';
-            speedRes.innerText = '-';
+        if (!dist || rawTime === '') {
+            paceRes.innerText = '-'; lapRes.innerText = '-'; speedRes.innerText = '-';
             return;
         }
 
         let totalSeconds = 0;
-        if (timeParts.length === 1) totalSeconds = timeParts[0];
-        else if (timeParts.length === 2) totalSeconds = timeParts[0] * 60 + timeParts[1];
-        else totalSeconds = timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2];
+        // スマート解析ロジック: 4桁以下ならMM:SS、5桁以上ならHH:MM:SS
+        if (rawTime.length <= 4) {
+            const ss = parseInt(rawTime.slice(-2)) || 0;
+            const mm = parseInt(rawTime.slice(0, -2)) || 0;
+            totalSeconds = mm * 60 + ss;
+        } else {
+            const ss = parseInt(rawTime.slice(-2)) || 0;
+            const mm = parseInt(rawTime.slice(-4, -2)) || 0;
+            const hh = parseInt(rawTime.slice(0, -4)) || 0;
+            totalSeconds = hh * 3600 + mm * 60 + ss;
+        }
 
         if (totalSeconds === 0) return;
 
-        // Pace (/km or /mile)
         const paceTotalSec = totalSeconds / dist;
         const pM = Math.floor(paceTotalSec / 60);
         const pS = Math.floor(paceTotalSec % 60);
         paceRes.innerText = `${pM}'${pS.toString().padStart(2, '0')}"`;
 
-        // Lap (always 400m for track users)
-        // 1km pace = X sec. 400m = X * 0.4
         const lapTotalSec = (unit === 'km') ? paceTotalSec * 0.4 : (paceTotalSec / 1.60934) * 0.4;
         const lM = Math.floor(lapTotalSec / 60);
         const lS = (lapTotalSec % 60).toFixed(1);
         lapRes.innerText = lM > 0 ? `${lM}'${lS.padStart(4, '0')}"` : `${lS}"`;
 
-        // Speed
         const speed = (dist / (totalSeconds / 3600)).toFixed(2);
         const speedUnit = unit === 'km' ? 'km/h' : 'mph';
         speedRes.innerText = `${speed} ${speedUnit}`;
