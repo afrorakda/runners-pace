@@ -40,7 +40,6 @@
         h1 { font-size: 2rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -1px; }
         .subtitle { font-size: 1rem; color: var(--text-gray); font-weight: 600; margin-bottom: 30px; }
 
-        /* Unit Toggle */
         .toggle-container {
             display: flex;
             background: var(--input-bg);
@@ -66,7 +65,6 @@
             color: #fff;
         }
 
-        /* Distance Selection */
         .grid-buttons {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -80,15 +78,17 @@
             border-radius: 12px;
             font-weight: 800;
             font-size: 0.9rem;
+            color: var(--main);
             cursor: pointer;
             touch-action: manipulation;
+            transition: all 0.1s;
         }
         .dist-btn.active {
+            background: var(--main);
+            color: #fff;
             border-color: var(--main);
-            background: #f0f0f0;
         }
 
-        /* Inputs */
         .input-group {
             text-align: left;
             margin-bottom: 20px;
@@ -99,6 +99,7 @@
         input {
             width: 100%;
             padding: 20px 15px;
+            padding-right: 45px;
             border: 2px solid var(--accent);
             border-radius: var(--radius);
             background: var(--input-bg);
@@ -111,37 +112,40 @@
             -webkit-text-fill-color: var(--main) !important;
             opacity: 1 !important;
         }
-        input::placeholder { color: #888; -webkit-text-fill-color: #888; }
+        input::placeholder { color: #bbb; -webkit-text-fill-color: #bbb; }
 
         .clear-btn {
             position: absolute;
-            right: 15px;
-            bottom: 15px;
+            right: 12px;
+            bottom: 12px;
             background: none;
             border: none;
             color: #888;
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             font-weight: 800;
             display: none;
             cursor: pointer;
+            padding: 5px;
+            z-index: 2;
         }
         .clear-btn.active { display: block; }
 
-        /* Result Card */
         .result-card {
             background: var(--main);
             color: #fff;
-            padding: 30px 20px;
+            padding: 25px 20px;
             border-radius: var(--radius);
             margin-top: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            text-align: left;
         }
         .res-item { display: flex; flex-direction: column; }
-        .res-label { font-size: 0.75rem; font-weight: 700; opacity: 0.6; text-transform: uppercase; }
-        .res-value { font-size: 2.2rem; font-weight: 900; letter-spacing: -1px; }
-        .res-small { font-size: 1.1rem; font-weight: 700; }
+        .res-item.full { grid-column: span 2; border-bottom: 1px solid #444; padding-bottom: 15px; }
+        .res-label { font-size: 0.75rem; font-weight: 700; opacity: 0.6; text-transform: uppercase; margin-bottom: 4px; }
+        .res-value { font-size: 2.2rem; font-weight: 900; letter-spacing: -1px; line-height: 1; }
+        .res-sub-val { font-size: 1.4rem; font-weight: 800; }
 
         footer { margin-top: 60px; font-size: 12px; color: #777; line-height: 1.8; font-weight: 500; }
         footer a { color: inherit; text-decoration: underline; }
@@ -172,7 +176,7 @@
 
 <div class="container">
     <h1>Runner's Pace</h1>
-    <p class="subtitle">Fastest pace calculator for athletes.</p>
+    <p class="subtitle">Precision tool for serious runners.</p>
 
     <div class="toggle-container">
         <button class="toggle-btn active" id="btn-km" onclick="setUnit('km')">Kilometers</button>
@@ -180,31 +184,36 @@
     </div>
 
     <div class="grid-buttons">
-        <button class="dist-btn" onclick="quickDist(5)" id="d-5">5K</button>
-        <button class="dist-btn" onclick="quickDist(10)" id="d-10">10K</button>
-        <button class="dist-btn" onclick="quickDist(21.0975)" id="d-21">Half</button>
-        <button class="dist-btn" onclick="quickDist(42.195)" id="d-42">Full</button>
+        <button class="dist-btn" onclick="quickDist(5, this)">5K</button>
+        <button class="dist-btn" onclick="quickDist(10, this)">10K</button>
+        <button class="dist-btn" onclick="quickDist(21.0975, this)">Half</button>
+        <button class="dist-btn" onclick="quickDist(42.195, this)">Full</button>
     </div>
 
     <div class="input-group">
         <label class="input-label" id="distLabel">Distance (km)</label>
-        <input type="number" id="distInput" placeholder="42.195" step="any" oninput="calculate()">
+        <input type="number" id="distInput" placeholder="42.195" step="any" inputmode="decimal" oninput="handleDistInput()">
+        <button class="clear-btn" id="clr-dist" onclick="clearInput('distInput')">×</button>
     </div>
 
     <div class="input-group">
         <label class="input-label">Time (HH:MM:SS)</label>
-        <input type="tel" id="timeInput" placeholder="03:59:59" oninput="formatTime(this); calculate();">
-        <button class="clear-btn" id="clr-time" onclick="clearTime()">×</button>
+        <input type="tel" id="timeInput" placeholder="03:59:59" oninput="handleTimeInput(this)">
+        <button class="clear-btn" id="clr-time" onclick="clearInput('timeInput')">×</button>
     </div>
 
     <div class="result-card">
-        <div class="res-item">
+        <div class="res-item full">
             <span class="res-label" id="paceLabel">Pace (/km)</span>
             <span class="res-value" id="paceRes">-</span>
         </div>
         <div class="res-item">
-            <span class="res-label">Average Speed</span>
-            <span class="res-value" id="speedRes">-</span>
+            <span class="res-label">Lap (400m)</span>
+            <span class="res-sub-val" id="lapRes">-</span>
+        </div>
+        <div class="res-item">
+            <span class="res-label">Avg Speed</span>
+            <span class="res-sub-val" id="speedRes">-</span>
         </div>
     </div>
 
@@ -234,28 +243,51 @@
     const distInput = document.getElementById('distInput');
     const timeInput = document.getElementById('timeInput');
     const paceRes = document.getElementById('paceRes');
+    const lapRes = document.getElementById('lapRes');
     const speedRes = document.getElementById('speedRes');
     const distLabel = document.getElementById('distLabel');
     const paceLabel = document.getElementById('paceLabel');
-    const clrTime = document.getElementById('clr-time');
 
     function setUnit(u) {
+        if (unit === u) return;
+        
+        const currentDist = parseFloat(distInput.value);
+        if (currentDist) {
+            if (u === 'mile') {
+                distInput.value = (currentDist * 0.621371).toFixed(3);
+            } else {
+                distInput.value = (currentDist / 0.621371).toFixed(3);
+            }
+        }
+        
         unit = u;
         document.getElementById('btn-km').classList.toggle('active', u === 'km');
         document.getElementById('btn-mile').classList.toggle('active', u === 'mile');
         distLabel.innerText = u === 'km' ? 'Distance (km)' : 'Distance (miles)';
         paceLabel.innerText = u === 'km' ? 'Pace (/km)' : 'Pace (/mile)';
+        
+        // Clear highlights as manual toggle might break the preset relationship
+        document.querySelectorAll('.dist-btn').forEach(b => b.classList.remove('active'));
         calculate();
     }
 
-    function quickDist(val) {
-        // Simple conversion for buttons if mile is selected
-        const finalVal = unit === 'mile' ? (val * 0.621371).toFixed(2) : val;
-        distInput.value = finalVal;
+    function quickDist(kmVal, btn) {
+        document.querySelectorAll('.dist-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const finalVal = unit === 'mile' ? (kmVal * 0.621371).toFixed(3) : kmVal;
+        distInput.value = parseFloat(finalVal);
+        updateClearBtns();
         calculate();
     }
 
-    function formatTime(input) {
+    function handleDistInput() {
+        document.querySelectorAll('.dist-btn').forEach(b => b.classList.remove('active'));
+        updateClearBtns();
+        calculate();
+    }
+
+    function handleTimeInput(input) {
         let val = input.value.replace(/[^0-9]/g, '');
         if (val.length > 6) val = val.slice(0, 6);
         
@@ -266,45 +298,59 @@
             else formatted = val.slice(0, -4) + ':' + val.slice(-4, -2) + ':' + val.slice(-2);
         }
         input.value = formatted;
-        clrTime.classList.toggle('active', val.length > 0);
+        updateClearBtns();
+        calculate();
     }
 
-    function clearTime() {
-        timeInput.value = '';
-        clrTime.classList.remove('active');
+    function updateClearBtns() {
+        document.getElementById('clr-dist').style.display = distInput.value ? 'block' : 'none';
+        document.getElementById('clr-time').style.display = timeInput.value ? 'block' : 'none';
+    }
+
+    function clearInput(id) {
+        const el = document.getElementById(id);
+        el.value = '';
+        if (id === 'distInput') document.querySelectorAll('.dist-btn').forEach(b => b.classList.remove('active'));
+        updateClearBtns();
         calculate();
+        el.focus();
     }
 
     function calculate() {
         const dist = parseFloat(distInput.value);
-        const timeStr = timeInput.value.replace(/:/g, '');
+        const timeParts = timeInput.value.split(':').map(v => parseInt(v) || 0);
         
-        if (!dist || timeStr.length < 1) {
+        if (!dist || timeParts.length === 0 || timeInput.value === '') {
             paceRes.innerText = '-';
+            lapRes.innerText = '-';
             speedRes.innerText = '-';
             return;
         }
 
-        let seconds = 0;
-        if (timeStr.length <= 2) seconds = parseInt(timeStr);
-        else if (timeStr.length <= 4) {
-            seconds = parseInt(timeStr.slice(0, -2)) * 60 + parseInt(timeStr.slice(-2));
-        } else {
-            seconds = parseInt(timeStr.slice(0, -4)) * 3600 + parseInt(timeStr.slice(-4, -2)) * 60 + parseInt(timeStr.slice(-2));
-        }
+        let totalSeconds = 0;
+        if (timeParts.length === 1) totalSeconds = timeParts[0];
+        else if (timeParts.length === 2) totalSeconds = timeParts[0] * 60 + timeParts[1];
+        else totalSeconds = timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2];
 
-        if (seconds === 0) return;
+        if (totalSeconds === 0) return;
 
-        // Pace
-        const paceTotalSeconds = seconds / dist;
-        const paceMins = Math.floor(paceTotalSeconds / 60);
-        const paceSecs = Math.floor(paceTotalSeconds % 60);
-        paceRes.innerText = `${paceMins}'${paceSecs.toString().padStart(2, '0')}"`;
+        // Pace (/km or /mile)
+        const paceTotalSec = totalSeconds / dist;
+        const pM = Math.floor(paceTotalSec / 60);
+        const pS = Math.floor(paceTotalSec % 60);
+        paceRes.innerText = `${pM}'${pS.toString().padStart(2, '0')}"`;
+
+        // Lap (always 400m for track users)
+        // 1km pace = X sec. 400m = X * 0.4
+        const lapTotalSec = (unit === 'km') ? paceTotalSec * 0.4 : (paceTotalSec / 1.60934) * 0.4;
+        const lM = Math.floor(lapTotalSec / 60);
+        const lS = (lapTotalSec % 60).toFixed(1);
+        lapRes.innerText = lM > 0 ? `${lM}'${lS.padStart(4, '0')}"` : `${lS}"`;
 
         // Speed
-        const speed = (dist / (seconds / 3600)).toFixed(2);
-        const unitLabel = unit === 'km' ? 'km/h' : 'mph';
-        speedRes.innerText = `${speed} ${unitLabel}`;
+        const speed = (dist / (totalSeconds / 3600)).toFixed(2);
+        const speedUnit = unit === 'km' ? 'km/h' : 'mph';
+        speedRes.innerText = `${speed} ${speedUnit}`;
     }
 
     function showModal() { document.getElementById('modal').style.display = 'flex'; }
