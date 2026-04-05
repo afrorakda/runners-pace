@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Runner's Pace</title>
+    
+    <link rel="icon" href="image_79.png">
+    <link rel="apple-touch-icon" href="image_79.png">
+
+    <style>
+        :root {
+            --main: #333;
+            --bg: #fff;
+            --accent: #ccc;
+            --input-bg: #fafafa;
+            --radius: 15px;
+            --text-gray: #666;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            padding: 40px 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        h1 { font-size: 2rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -1px; }
+        .subtitle { font-size: 1rem; color: var(--text-gray); font-weight: 600; margin-bottom: 30px; }
+
+        /* Unit Toggle */
+        .toggle-container {
+            display: flex;
+            background: var(--input-bg);
+            padding: 5px;
+            border-radius: var(--radius);
+            border: 2px solid var(--accent);
+            margin-bottom: 25px;
+        }
+        .toggle-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            background: transparent;
+            font-weight: 800;
+            color: var(--text-gray);
+            cursor: pointer;
+            transition: all 0.2s;
+            touch-action: manipulation;
+        }
+        .toggle-btn.active {
+            background: var(--main);
+            color: #fff;
+        }
+
+        /* Distance Selection */
+        .grid-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        .dist-btn {
+            background: var(--input-bg);
+            border: 2px solid var(--accent);
+            padding: 12px 5px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 0.9rem;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .dist-btn.active {
+            border-color: var(--main);
+            background: #f0f0f0;
+        }
+
+        /* Inputs */
+        .input-group {
+            text-align: left;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .input-label { font-size: 0.9rem; font-weight: 800; color: var(--main); margin-bottom: 8px; display: block; margin-left: 5px; }
+        
+        input {
+            width: 100%;
+            padding: 20px 15px;
+            border: 2px solid var(--accent);
+            border-radius: var(--radius);
+            background: var(--input-bg);
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--main) !important;
+            box-sizing: border-box;
+            outline: none;
+            -webkit-appearance: none;
+            -webkit-text-fill-color: var(--main) !important;
+            opacity: 1 !important;
+        }
+        input::placeholder { color: #888; -webkit-text-fill-color: #888; }
+
+        .clear-btn {
+            position: absolute;
+            right: 15px;
+            bottom: 15px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.4rem;
+            font-weight: 800;
+            display: none;
+            cursor: pointer;
+        }
+        .clear-btn.active { display: block; }
+
+        /* Result Card */
+        .result-card {
+            background: var(--main);
+            color: #fff;
+            padding: 30px 20px;
+            border-radius: var(--radius);
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .res-item { display: flex; flex-direction: column; }
+        .res-label { font-size: 0.75rem; font-weight: 700; opacity: 0.6; text-transform: uppercase; }
+        .res-value { font-size: 2.2rem; font-weight: 900; letter-spacing: -1px; }
+        .res-small { font-size: 1.1rem; font-weight: 700; }
+
+        footer { margin-top: 60px; font-size: 12px; color: #777; line-height: 1.8; font-weight: 500; }
+        footer a { color: inherit; text-decoration: underline; }
+        .footer-btns { margin-top: 30px; }
+        .kofi-btn {
+            display: inline-block; background: var(--main); color: #fff;
+            padding: 14px 28px; border-radius: var(--radius);
+            text-decoration: none; font-weight: bold; font-size: 15px; margin-bottom: 15px;
+        }
+        .home-btn {
+            display: block; width: 70%; margin: 0 auto; background: var(--accent);
+            color: var(--main); border: none; padding: 12px;
+            border-radius: var(--radius); font-weight: 800; font-size: 14px; cursor: pointer;
+        }
+
+        #modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 100;
+        }
+        .modal-content {
+            background: #fff; width: 85%; max-width: 340px; padding: 35px;
+            border-radius: var(--radius); text-align: left; position: relative;
+        }
+        .close-x { position: absolute; top: 15px; right: 20px; font-size: 24px; color: #888; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Runner's Pace</h1>
+    <p class="subtitle">Fastest pace calculator for athletes.</p>
+
+    <div class="toggle-container">
+        <button class="toggle-btn active" id="btn-km" onclick="setUnit('km')">Kilometers</button>
+        <button class="toggle-btn" id="btn-mile" onclick="setUnit('mile')">Miles</button>
+    </div>
+
+    <div class="grid-buttons">
+        <button class="dist-btn" onclick="quickDist(5)" id="d-5">5K</button>
+        <button class="dist-btn" onclick="quickDist(10)" id="d-10">10K</button>
+        <button class="dist-btn" onclick="quickDist(21.0975)" id="d-21">Half</button>
+        <button class="dist-btn" onclick="quickDist(42.195)" id="d-42">Full</button>
+    </div>
+
+    <div class="input-group">
+        <label class="input-label" id="distLabel">Distance (km)</label>
+        <input type="number" id="distInput" placeholder="42.195" step="any" oninput="calculate()">
+    </div>
+
+    <div class="input-group">
+        <label class="input-label">Time (HH:MM:SS)</label>
+        <input type="tel" id="timeInput" placeholder="03:59:59" oninput="formatTime(this); calculate();">
+        <button class="clear-btn" id="clr-time" onclick="clearTime()">×</button>
+    </div>
+
+    <div class="result-card">
+        <div class="res-item">
+            <span class="res-label" id="paceLabel">Pace (/km)</span>
+            <span class="res-value" id="paceRes">-</span>
+        </div>
+        <div class="res-item">
+            <span class="res-label">Average Speed</span>
+            <span class="res-value" id="speedRes">-</span>
+        </div>
+    </div>
+
+    <div class="footer-btns">
+        <a href="https://ko-fi.com/afrorakda" target="_blank" class="kofi-btn">☕️buy me a coffee</a>
+        <button class="home-btn" onclick="showModal()">Add to Home Screen</button>
+    </div>
+
+    <footer>
+        <div>No login / No tracking / No ads / Browser only</div>
+        <div><a href="https://afrorakda.com/privacy/">Privacy Policy</a> / afrorakda © 2026</div>
+    </footer>
+</div>
+
+<div id="modal" onclick="hideModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="close-x" onclick="hideModal()">×</span>
+        <h3>📱 Install</h3>
+        <p>Add to your home screen.</p>
+        <p>🍏 <strong>iPhone (Safari):</strong><br>Tap Share, then Add to Home Screen.</p>
+        <p>🤖 <strong>Android (Chrome):</strong><br>Tap Menu (⋮), then Add to Home Screen.</p>
+    </div>
+</div>
+
+<script>
+    let unit = 'km';
+    const distInput = document.getElementById('distInput');
+    const timeInput = document.getElementById('timeInput');
+    const paceRes = document.getElementById('paceRes');
+    const speedRes = document.getElementById('speedRes');
+    const distLabel = document.getElementById('distLabel');
+    const paceLabel = document.getElementById('paceLabel');
+    const clrTime = document.getElementById('clr-time');
+
+    function setUnit(u) {
+        unit = u;
+        document.getElementById('btn-km').classList.toggle('active', u === 'km');
+        document.getElementById('btn-mile').classList.toggle('active', u === 'mile');
+        distLabel.innerText = u === 'km' ? 'Distance (km)' : 'Distance (miles)';
+        paceLabel.innerText = u === 'km' ? 'Pace (/km)' : 'Pace (/mile)';
+        calculate();
+    }
+
+    function quickDist(val) {
+        // Simple conversion for buttons if mile is selected
+        const finalVal = unit === 'mile' ? (val * 0.621371).toFixed(2) : val;
+        distInput.value = finalVal;
+        calculate();
+    }
+
+    function formatTime(input) {
+        let val = input.value.replace(/[^0-9]/g, '');
+        if (val.length > 6) val = val.slice(0, 6);
+        
+        let formatted = '';
+        if (val.length > 0) {
+            if (val.length <= 2) formatted = val;
+            else if (val.length <= 4) formatted = val.slice(0, -2) + ':' + val.slice(-2);
+            else formatted = val.slice(0, -4) + ':' + val.slice(-4, -2) + ':' + val.slice(-2);
+        }
+        input.value = formatted;
+        clrTime.classList.toggle('active', val.length > 0);
+    }
+
+    function clearTime() {
+        timeInput.value = '';
+        clrTime.classList.remove('active');
+        calculate();
+    }
+
+    function calculate() {
+        const dist = parseFloat(distInput.value);
+        const timeStr = timeInput.value.replace(/:/g, '');
+        
+        if (!dist || timeStr.length < 1) {
+            paceRes.innerText = '-';
+            speedRes.innerText = '-';
+            return;
+        }
+
+        let seconds = 0;
+        if (timeStr.length <= 2) seconds = parseInt(timeStr);
+        else if (timeStr.length <= 4) {
+            seconds = parseInt(timeStr.slice(0, -2)) * 60 + parseInt(timeStr.slice(-2));
+        } else {
+            seconds = parseInt(timeStr.slice(0, -4)) * 3600 + parseInt(timeStr.slice(-4, -2)) * 60 + parseInt(timeStr.slice(-2));
+        }
+
+        if (seconds === 0) return;
+
+        // Pace
+        const paceTotalSeconds = seconds / dist;
+        const paceMins = Math.floor(paceTotalSeconds / 60);
+        const paceSecs = Math.floor(paceTotalSeconds % 60);
+        paceRes.innerText = `${paceMins}'${paceSecs.toString().padStart(2, '0')}"`;
+
+        // Speed
+        const speed = (dist / (seconds / 3600)).toFixed(2);
+        const unitLabel = unit === 'km' ? 'km/h' : 'mph';
+        speedRes.innerText = `${speed} ${unitLabel}`;
+    }
+
+    function showModal() { document.getElementById('modal').style.display = 'flex'; }
+    function hideModal() { document.getElementById('modal').style.display = 'none'; }
+</script>
+
+</body>
+</html>
