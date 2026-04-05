@@ -60,10 +60,7 @@
             transition: all 0.2s;
             touch-action: manipulation;
         }
-        .toggle-btn.active {
-            background: var(--main);
-            color: #fff;
-        }
+        .toggle-btn.active { background: var(--main); color: #fff; }
 
         .grid-buttons {
             display: grid;
@@ -83,11 +80,7 @@
             touch-action: manipulation;
             transition: all 0.1s;
         }
-        .dist-btn.active {
-            background: var(--main);
-            color: #fff;
-            border-color: var(--main);
-        }
+        .dist-btn.active { background: var(--main); color: #fff; border-color: var(--main); }
 
         .input-group {
             text-align: left;
@@ -137,15 +130,16 @@
             border-radius: var(--radius);
             margin-top: 20px;
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 15px;
             text-align: left;
         }
         .res-item { display: flex; flex-direction: column; }
-        .res-item.full { grid-column: span 2; border-bottom: 1px solid #444; padding-bottom: 15px; }
+        .res-item.full { grid-column: span 2; border-bottom: 1px solid #444; padding-bottom: 15px; margin-bottom: 5px; }
         .res-label { font-size: 0.75rem; font-weight: 700; opacity: 0.6; text-transform: uppercase; margin-bottom: 4px; }
-        .res-value { font-size: 2.2rem; font-weight: 900; letter-spacing: -1px; line-height: 1; }
-        .res-sub-val { font-size: 1.4rem; font-weight: 800; }
+        .res-value { font-size: 2.8rem; font-weight: 900; letter-spacing: -1.5px; line-height: 1; }
+        .res-mid-val { font-size: 1.8rem; font-weight: 900; letter-spacing: -1px; }
+        .res-small-val { font-size: 1rem; font-weight: 700; opacity: 0.8; }
 
         footer { margin-top: 60px; font-size: 12px; color: #777; line-height: 1.8; font-weight: 500; }
         footer a { color: inherit; text-decoration: underline; }
@@ -192,13 +186,13 @@
 
     <div class="input-group">
         <label class="input-label" id="distLabel">Distance (km)</label>
-        <input type="number" id="distInput" placeholder="42.195" step="any" inputmode="decimal" oninput="handleDistInput()">
+        <input type="text" id="distInput" placeholder="42.195" inputmode="decimal" oninput="handleDistInput()">
         <button class="clear-btn" id="clr-dist" onclick="clearInput('distInput')">×</button>
     </div>
 
     <div class="input-group">
-        <label class="input-label">Time (MM:SS or HH:MM:SS)</label>
-        <input type="tel" id="timeInput" placeholder="22:00" oninput="handleTimeInput(this)">
+        <label class="input-label">Time (MMSS or HHMMSS)</label>
+        <input type="tel" id="timeInput" placeholder="2200" oninput="handleTimeInput(this)">
         <button class="clear-btn" id="clr-time" onclick="clearInput('timeInput')">×</button>
     </div>
 
@@ -209,11 +203,11 @@
         </div>
         <div class="res-item">
             <span class="res-label">Lap (400m)</span>
-            <span class="res-sub-val" id="lapRes">-</span>
+            <span class="res-mid-val" id="lapRes">-</span>
         </div>
-        <div class="res-item">
+        <div class="res-item" style="text-align: right; justify-content: flex-end;">
             <span class="res-label">Avg Speed</span>
-            <span class="res-sub-val" id="speedRes">-</span>
+            <span class="res-small-val" id="speedRes">-</span>
         </div>
     </div>
 
@@ -274,6 +268,7 @@
     }
 
     function handleDistInput() {
+        distInput.value = distInput.value.replace(/[^0-9.]/g, '');
         document.querySelectorAll('.dist-btn').forEach(b => b.classList.remove('active'));
         updateClearBtns();
         calculate();
@@ -282,6 +277,7 @@
     function handleTimeInput(input) {
         let val = input.value.replace(/[^0-9]/g, '');
         if (val.length > 6) val = val.slice(0, 6);
+        
         let formatted = '';
         if (val.length > 0) {
             if (val.length <= 2) formatted = val;
@@ -317,17 +313,11 @@
         }
 
         let totalSeconds = 0;
-        // スマート解析ロジック: 4桁以下ならMM:SS、5桁以上ならHH:MM:SS
-        if (rawTime.length <= 4) {
-            const ss = parseInt(rawTime.slice(-2)) || 0;
-            const mm = parseInt(rawTime.slice(0, -2)) || 0;
-            totalSeconds = mm * 60 + ss;
-        } else {
-            const ss = parseInt(rawTime.slice(-2)) || 0;
-            const mm = parseInt(rawTime.slice(-4, -2)) || 0;
-            const hh = parseInt(rawTime.slice(0, -4)) || 0;
-            totalSeconds = hh * 3600 + mm * 60 + ss;
-        }
+        // 右詰め解析ロジック (2200 -> 22:00, 10500 -> 1:05:00)
+        const ss = parseInt(rawTime.slice(-2)) || 0;
+        const mm = parseInt(rawTime.slice(-4, -2)) || 0;
+        const hh = parseInt(rawTime.slice(0, -4)) || 0;
+        totalSeconds = hh * 3600 + mm * 60 + ss;
 
         if (totalSeconds === 0) return;
 
